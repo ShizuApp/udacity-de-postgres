@@ -7,10 +7,20 @@ from sql_queries import *
 
 
 def process_song_file(cur, filepath):
-    # open song file
+    """
+    Reads a json formatted file and extracts the data.
+    Inserts processed data into songs and artists tables.
+
+    ### Args:
+    - cur - cursor parameter of the connection
+    - filepath - address of the file 
+    """
+
+    # Read file
     with open(filepath) as f:
         data = json.loads(f.read())
 
+    # Create data frame
     df = pd.DataFrame([data])
 
     # insert song record
@@ -23,10 +33,19 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
-    # open log file
+    """
+    Reads a json formatted file and applies an ELT process to insert data into the time, users and fact tables.
+
+    ### Args:
+    - cur - cursor parameter of the connection
+    - filepath - address of the file 
+    """
+
+    # Read file
     with open(filepath) as f:
         data = [json.loads(line) for line in f]
     
+    # Create data frame
     df = pd.DataFrame(data)
 
     # filter by NextSong action
@@ -59,13 +78,11 @@ def process_log_file(cur, filepath):
         # get songid and artistid from song and artist tables
         cur.execute(song_select, (row.song, row.artist, row.length))
         results = cur.fetchone()
-        songid, artistid = None, None
-        try:
-            if results:
-                songid, artistid = results
-        except (ValueError):
-            print(f'Corrupted soing_id or artist_id pair has ({len(results)}) length!')
 
+        if results:
+            songid, artistid = results
+        else:
+            songid, artistid = None, None
 
         # insert songplay record
         ts = pd.to_datetime(row.ts, unit='ms')
